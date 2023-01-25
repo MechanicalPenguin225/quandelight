@@ -5,6 +5,7 @@ __pycache__/
 *.h5
 *.png
 *.gif
+*-out/
 
 # C extensions
 *.so
