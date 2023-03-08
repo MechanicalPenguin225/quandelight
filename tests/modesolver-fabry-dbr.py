@@ -9,7 +9,7 @@ from meep import mpb
 eps1 = 1
 eps2 = 3.45
 
-N = 2
+N = 10
 
 pml_thickness = 1.0
 
@@ -18,7 +18,7 @@ cavity_transverse_extent = 0.5
 ## MPB VARIABLES
 
 RESOLUTION = 21
-NUM_BANDS = 2
+NUM_BANDS = 5
 INTERP_POINTS = 31
 
 
@@ -78,7 +78,9 @@ cell = mp.Vector3(2*sim_half_width)
 geometry_lattice = mp.Lattice(size=mp.Vector3(sim_half_width, cavity_transverse_extent))
 
 k_points = [mp.Vector3(),          # Gamma
-            mp.Vector3(0.5)]          # Gamma
+            mp.Vector3(0.5),
+            mp.Vector3(0.5, 0.5),
+            mp.Vector3(),]          # Gamma
 
 k_points = mp.interpolate(INTERP_POINTS, k_points)
 
