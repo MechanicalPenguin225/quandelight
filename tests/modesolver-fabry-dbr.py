@@ -11,15 +11,13 @@ eps2 = 3.45
 
 N = 10
 
-pml_thickness = 1.0
-
 cavity_transverse_extent = 0.5
 
 ## MPB VARIABLES
 
 RESOLUTION = 21
-NUM_BANDS = 5
-INTERP_POINTS = 31
+NUM_BANDS = 3
+INTERP_POINTS = 151
 
 
 ### FUNCTIONS
@@ -42,7 +40,7 @@ def gen_fabry_geometry(N, eps1, eps2):
 
     grating_periodicity = lay_th_1 + lay_th_2
 
-    sim_half_width = half_cavity_width + N*grating_periodicity + pml_thickness
+    sim_half_width = half_cavity_width + N*grating_periodicity
 
     geometry = []
 
@@ -75,12 +73,10 @@ geometry, sim_half_width, omega, half_cavity_width = gen_fabry_geometry(N, eps1,
 
 cell = mp.Vector3(2*sim_half_width)
 
-geometry_lattice = mp.Lattice(size=mp.Vector3(sim_half_width, cavity_transverse_extent))
+geometry_lattice = mp.Lattice(size=mp.Vector3(3*sim_half_width, cavity_transverse_extent))
 
-k_points = [mp.Vector3(),          # Gamma
-            mp.Vector3(0.5),
-            mp.Vector3(0.5, 0.5),
-            mp.Vector3(),]          # Gamma
+k_points = [mp.Vector3(),
+            mp.Vector3(0, 0.5),]          # Gamma
 
 k_points = mp.interpolate(INTERP_POINTS, k_points)
 
@@ -91,41 +87,13 @@ ms = ModeSolver(num_bands=NUM_BANDS,
                 geometry_lattice=geometry_lattice,
                 resolution=RESOLUTION)
 
-# for i, current_omega in enumerate(omega_values):
-#     k_bands[i, :] = ms.find_k(
-#         mp.NO_PARITY,
-#         omega,
-#         1,
-#         NUM_BANDS,
-#         mp.Vector3(0, 0, 1),
-#         1e-3,
-#         current_omega * eps2,
-#         current_omega*0.1,
-#         current_omega*4)
-
-
-# fig, ax = plt.subplots(1, 2)
-# ax1, ax2 = ax
-# ax1.set_xlabel(r"$\omega$")
-# ax2.set_xlabel(r"$\omega$")
-
-# ax1.set_ylabel(r"$k$")
-# ax2.set_xlabel(r"$n$")
-
-# for band in range(NUM_BANDS):
-#     ax1.plot(omega_values, k_bands[:, band], label = f"band {band + 1}")
-#     ax2.plot(omega_values, k_bands[:, band]/omega_values, label = f"band {band + 1}")
-
-# ax1.legend()
-# ax2.legend()
-# plt.show()
-
 ms.run_te()
 
-fig, ax = plt.subplots()
-
+fig, ax = plt.subplots(1, 2, constrained_layout = True)
+ax1, ax2 = ax
 s = ms.all_freqs.T
 for i in s :
-    ax.plot(i)
-
+    ax1.plot(i)
+im = ax2.imshow(ms.get_epsilon(), aspect = 'auto', origin = 'lower', interpolation = 'none')
+fig.colorbar(im)
 plt.show()
