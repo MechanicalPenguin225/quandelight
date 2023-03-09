@@ -7,11 +7,13 @@ from meep import mpb
 import h5py
 
 
-eps1 = 1
+eps1 = 3
 eps2 = 3.45
 lamda = 5
 
-N = 12
+FILL_CENTER = True
+
+N = 30
 
 cavity_transverse_extent = 0.5
 
@@ -19,7 +21,7 @@ cavity_transverse_extent = 0.5
 
 RESOLUTION = 32
 NUM_BANDS = 2
-INTERP_POINTS = 4
+INTERP_POINTS = 128
 
 
 ### FUNCTIONS
@@ -36,7 +38,7 @@ def gen_fabry_geometry(N, eps1, eps2, lamda, fill_center = False):
     lay_th_1 = lamda_1/4
     lay_th_2 = lamda_2/4
 
-    half_cavity_width = lamda_0/2
+    half_cavity_width = lamda_1/2 if fill_center else lamda_0/2
 
     grating_periodicity = lay_th_1 + lay_th_2
 
@@ -73,40 +75,95 @@ def gen_fabry_geometry(N, eps1, eps2, lamda, fill_center = False):
 
 ### PROGRAM FLOW
 
-geometry, sim_half_width, half_cavity_width = gen_fabry_geometry(N, eps1, eps2, lamda, fill_center = False)
+geometry, sim_half_width, half_cavity_width = gen_fabry_geometry(N, eps1, eps2, lamda, fill_center = FILL_CENTER)
 
 
-cell = mp.Vector3(2*sim_half_width)
+cell = mp.Vector3(2*sim_half_width, cavity_transverse_extent)
+a_x = cell.x
+a_y = cell.y
 
-geometry_lattice = mp.Lattice(size=mp.Vector3(3*sim_half_width, 2*cavity_transverse_extent))
+b_x = 1/a_x
+b_y = 1/a_y
 
-k_points = [mp.Vector3(),
-            mp.Vector3(0.5, 0),
-            mp.Vector3(0.5, 0.5),
-            mp.Vector3(0, 0.5),
-            mp.Vector3(),]          # Gamma
+geometry_lattice = mp.Lattice(size=cell)
 
-k_points = mp.interpolate(INTERP_POINTS, k_points)
+# Making k point lists
+k_points_x = [mp.Vector3(),
+            mp.Vector3(0.5, 0),]          # Gamma
 
+k_points_y = [mp.Vector3(),
+            mp.Vector3(0, 0.5),]          # Gamma
 
-ms = ModeSolver(num_bands=NUM_BANDS,
-                k_points = k_points,
+k_points_x = mp.interpolate(INTERP_POINTS, k_points_x)
+k_points_y = mp.interpolate(INTERP_POINTS, k_points_y)
+
+# Modesolver for x direction
+ms_x = ModeSolver(num_bands=NUM_BANDS,
+                k_points = k_points_x,
                 geometry=geometry,
                 geometry_lattice=geometry_lattice,
                 resolution=RESOLUTION)
 
-ms.run_te()
+ms_x.run_te()
+omegas_x = ms_x.all_freqs.T
+k_vals_x = np.array([v.norm() for v in k_points_x])*b_x
 
-efield = mpb.output_efield(ms, 2)
-ms.output_epsilon()
-print("EFIELD OUTPUT", efield)
+# Modesolver for y direction
+ms_y = ModeSolver(num_bands=NUM_BANDS,
+                k_points = k_points_y,
+                geometry=geometry,
+                geometry_lattice=geometry_lattice,
+                resolution=RESOLUTION)
 
-fig, ax = plt.subplots(1, 2, constrained_layout = True)
-ax1, ax2 = ax
-s = ms.all_freqs.T
-for i in s :
-    ax1.plot(i)
-im = ax2.imshow(ms.get_epsilon(), aspect = 'auto', origin = 'lower', interpolation = 'none', cmap = 'binary')
-#im2 = ax2.imshow(efield, aspect = 'auto', origin = 'lower', interpolation = 'none', cmap = "RdBu_r", alpha = 0.5)
+ms_y.run_te()
+omegas_y = ms_y.all_freqs.T
+k_vals_y = np.array([v.norm() for v in k_points_y])*b_y
+
+
+# ---------- PLOTTING ----------
+
+fig, ax = plt.subplots(1, 5, constrained_layout = True)
+ax_x, ax_x_n, ax_y, ax_y_n, ax_eps = ax
+
+ax_x.set_xlabel(r"$k_x$")
+ax_x_n.set_xlabel(r"$k_x$")
+ax_y_n.set_xlabel(r"$k_y$")
+ax_y.set_xlabel(r"$k_y$")
+
+ax_x_n.set_ylim(0, 3)
+ax_y_n.set_ylim(0, 3)
+
+for axis in [ax_x, ax_y]:
+    axis.set_ylabel(r'$\omega$')
+
+for axis in [ax_x_n, ax_y_n]:
+    axis.set_ylabel(r"$n_eff$")
+    axis.axhline(y = np.sqrt(eps2), color = 'lightgray', label = r"$n_2$")
+    axis.axhline(y = np.sqrt(eps1), color = 'lightgray', ls = '--', label = r"$n_1$")
+
+
+# Plotting for x
+
+for band_x, omega_points_x in enumerate(omegas_x):
+    omega_plot = ax_x.plot(k_vals_x, omega_points_x, label = str(band_x))
+    ax_x_n.plot(k_vals_x, omega_points_x/k_vals_x, ls = '--', color = omega_plot[0].get_color())
+
+
+# Plotting for y
+
+for band_y, omega_points_y in enumerate(omegas_y):
+    omega_plot = ax_y.plot(k_vals_y, omega_points_y, label = str(band_y))
+    ax_y_n.plot(k_vals_y, omega_points_y/k_vals_y, ls = '--', color = omega_plot[0].get_color())
+
+
+
+# plotting eps
+
+im = ax_eps.imshow(ms_x.get_epsilon(), aspect = 'auto', origin = 'lower', interpolation = 'none', cmap = 'binary')
+#im2 = ax_y.imshow(efield, aspect = 'auto', origin = 'lower', interpolation = 'none', cmap = "RdBu_r", alpha = 0.5)
+
 fig.colorbar(im)
+
+ax_x.legend()
+ax_y.legend()
 plt.show()
