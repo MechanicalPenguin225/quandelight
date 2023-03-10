@@ -9,19 +9,19 @@ import h5py
 
 eps1 = 3
 eps2 = 3.45
-lamda = 5
+lamda = 10
 
 FILL_CENTER = True
 
-N = 30
+N = 5
 
 cavity_transverse_extent = 0.5
 
 ## MPB VARIABLES
 
 RESOLUTION = 32
-NUM_BANDS = 2
-INTERP_POINTS = 128
+NUM_BANDS = 11
+INTERP_POINTS = 51
 
 
 ### FUNCTIONS
@@ -78,7 +78,8 @@ def gen_fabry_geometry(N, eps1, eps2, lamda, fill_center = False):
 geometry, sim_half_width, half_cavity_width = gen_fabry_geometry(N, eps1, eps2, lamda, fill_center = FILL_CENTER)
 
 
-cell = mp.Vector3(2*sim_half_width, cavity_transverse_extent)
+cell = mp.Vector3(sim_half_width,
+                  cavity_transverse_extent)
 a_x = cell.x
 a_y = cell.y
 
@@ -164,6 +165,6 @@ im = ax_eps.imshow(ms_x.get_epsilon(), aspect = 'auto', origin = 'lower', interp
 
 fig.colorbar(im)
 
-ax_x.legend()
-ax_y.legend()
+#ax_x.legend()
+#ax_y.legend()
 plt.show()
