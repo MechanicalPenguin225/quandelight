@@ -13,6 +13,8 @@ lamda = 15
 
 cavity_transverse_extent = 0.5
 
+padding_x = 0
+padding_y = 0
 ## MPB VARIABLES
 
 RESOLUTION = 64
@@ -20,43 +22,40 @@ NUM_BANDS =2
 INTERP_POINTS = 151
 
 
-### FUNCTIONS
-
-def gen_geometry(eps1, eps2, lamda):
-    s1 = np.sqrt(eps1)
-    s2 = np.sqrt(eps2)
-
-    lamda_0 = lamda
-
-    lamda_1 = lamda/s1
-    lamda_2 = lamda/s2
-
-    lay_th_1 = lamda_1/4
-    lay_th_2 = lamda_2/4
+# DEPENDENT PARAMS
 
 
+n1 = np.sqrt(eps1)
+n2 = np.sqrt(eps2)
 
-    grating_periodicity = lay_th_1 + lay_th_2
+lamda_1 = lamda/n1
+lamda_2 = lamda/n2
 
-    geometry = [mp.Block(mp.Vector3(lay_th_2, cavity_transverse_extent, 0), # right eps2 layer
-                              center=mp.Vector3(-grating_periodicity/2 + lay_th_2/2),
-                              material=mp.Medium(epsilon=eps2)),
-                mp.Block(mp.Vector3(lay_th_1, cavity_transverse_extent, 0), # right eps2 layer
-                              center=mp.Vector3(grating_periodicity/2  - lay_th_1/2),
-                              material=mp.Medium(epsilon=eps1))]
-    return geometry, grating_periodicity
+lay_th_1 = lamda_1/4
+lay_th_2 = lamda_2/4
+
+
+grating_periodicity = lay_th_1 + lay_th_2
+
+omega_adim = (n1 + n2)/(4*n1*n2*grating_periodicity)
+band_width = 4/np.pi*np.arcsin(np.abs(n1 - n2)/(n1 + n2))
+
 
 ### PROGRAM FLOW
 
-geometry, grating_length = gen_geometry(eps1, eps2, lamda)
+geometry = [mp.Block(mp.Vector3(lay_th_2, cavity_transverse_extent, 0), # right eps2 layer
+                     center=mp.Vector3(-grating_periodicity/2 + lay_th_2/2),
+                     material=mp.Medium(epsilon=eps2)),
+            mp.Block(mp.Vector3(lay_th_1, cavity_transverse_extent, 0), # right eps2 layer
+                     center=mp.Vector3(grating_periodicity/2  - lay_th_1/2),
+                     material=mp.Medium(epsilon=eps1))]
 
 
-cell = mp.Vector3(grating_length, cavity_transverse_extent)
+
+cell = mp.Vector3(grating_periodicity + 2*padding_x, cavity_transverse_extent + 2*padding_y)
 a_x = cell.x
 a_y = cell.y
 
-b_x = 1/a_x
-b_y = 1/a_y
 
 geometry_lattice = mp.Lattice(size=cell)
 
@@ -79,7 +78,7 @@ ms_te = ModeSolver(num_bands=NUM_BANDS,
 
 ms_te.run_te()
 omegas_te = ms_te.all_freqs.T
-k_vals_te = np.array([v.norm() for v in k_points_te])*b_x
+k_vals_te = np.array([v.norm() for v in k_points_te])/a_x
 
 # Modesolver for y direction
 ms_tm = ModeSolver(num_bands=NUM_BANDS,
@@ -90,7 +89,7 @@ ms_tm = ModeSolver(num_bands=NUM_BANDS,
 
 ms_tm.run_tm()
 omegas_tm = ms_tm.all_freqs.T
-k_vals_tm = np.array([v.norm() for v in k_points_tm])*b_x
+k_vals_tm = np.array([v.norm() for v in k_points_tm])/a_x
 
 
 # ---------- PLOTTING ----------
@@ -108,6 +107,8 @@ ax_tm_n.set_ylim(0, 3)
 
 for axis in [ax_te, ax_tm]:
     axis.set_ylabel(r'$\omega$')
+    axis.axhspan(ymin = omega_adim*(1 - band_width / 2), ymax = omega_adim*(1 + band_width / 2), color = 'lightgray', alpha = 0.5)
+    axis.axhline(y = omega_adim, color = 'lightgray', ls = '--')
 
 for axis in [ax_te_n, ax_tm_n]:
     axis.set_ylabel(r"$n_eff$")
