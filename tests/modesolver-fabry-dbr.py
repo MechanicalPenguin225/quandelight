@@ -6,30 +6,32 @@ from meep.mpb import ModeSolver
 from meep import mpb
 import h5py
 
+eps1 = 1
+eps2 = 12
+lamda = 15
 
-eps1 = 3
-eps2 = 3.45
-lamda = 5
+FILL_CENTER = True
 
-FILL_CENTER = False
+N = 32
 
-N = 2
-
-cavity_transverse_extent = 0.5
+cavity_transverse_extent = 1/8
 
 ## MPB VARIABLES
 
-RESOLUTION = 32
-NUM_BANDS = 6*N
-INTERP_POINTS = 51
+PADDING_RATIO = 1
 
+RESOLUTION = 16
+NUM_BANDS = 2*(N + 1) + 1
+INTERP_POINTS = 1
+
+PLOT_GUESSES = True
 
 # COMPUTING SOME RELEVANT QUANTITIES
 
 n1 = np.sqrt(eps1)
 n2 = np.sqrt(eps2)
 
-lamda_0 = lamda
+
 
 lamda_1 = lamda/n1
 lamda_2 = lamda/n2
@@ -37,18 +39,16 @@ lamda_2 = lamda/n2
 lay_th_1 = lamda_1/4
 lay_th_2 = lamda_2/4
 
-half_cavity_width = lamda_1/2 if FILL_CENTER else lamda_0/2
+lamda_0 = lamda_1 if FILL_CENTER else lamda
+
+half_cavity_width = lamda_0/2
 
 grating_periodicity = lay_th_1 + lay_th_2
 
-omega_adim_dbr = (n1 + n2)/(4*n1*n2*grating_periodicity) # careful, this is a reduced unit wrt the periodicity of the bragg reflector
+omega_adim = (n1 + n2)/(4*n1*n2*grating_periodicity) # careful, this is a reduced unit wrt the periodicity of the bragg reflector
 band_width = 4/np.pi*np.arcsin(np.abs(n1 - n2)/(n1 + n2))
 
 sim_half_width = half_cavity_width + N*grating_periodicity
-
-lattice_scale_factor = (2*sim_half_width)/grating_periodicity # conversion factor from periodicity of the DBR lattice to size of the complete cell.
-
-omega_adim = omega_adim_dbr*lattice_scale_factor
 
 geometry = []
 
@@ -89,10 +89,10 @@ a_y = cell.y
 b_x = 1/a_x
 b_y = 1/a_y
 
-geometry_lattice = mp.Lattice(size=cell)
+geometry_lattice = mp.Lattice(size=PADDING_RATIO*cell)
 
 # Making k point lists
-k_points_x = [mp.Vector3(-0.5, 0),
+k_points_x = [mp.Vector3(),
             mp.Vector3(0.5, 0),]          # Gamma
 
 k_points_x = mp.interpolate(INTERP_POINTS, k_points_x)
@@ -116,11 +116,10 @@ ax_x, ax_eps = ax
 
 ax_x.set_xlabel(r"$k_x$")
 ax_x.set_ylabel(r'$\omega$')
-ax_x.axhspan(ymin = omega_adim*(1 - band_width / 2), ymax = omega_adim*(1 + band_width / 2), color = 'lightgray', alpha = 0.5)
-ax_x.axhline(y = omega_adim, color = 'lightgray', ls = '--')
 
-ax_x.axhspan(ymin = 2*sim_half_width/lamda*(1 - band_width / 2), ymax = 2*sim_half_width/lamda*(1 + band_width / 2), color = 'lightgreen', alpha = 0.5)
-ax_x.axhline(y = 2*sim_half_width/lamda, color = 'lightgreen', ls = '--')
+if PLOT_GUESSES :
+    ax_x.axhspan(ymin = omega_adim*(1 - band_width / 2), ymax = omega_adim*(1 + band_width / 2), color = 'lightgray', alpha = 0.5)
+    ax_x.axhline(y = omega_adim, color = 'lightgray', ls = '--')
 
 # Plotting for x
 

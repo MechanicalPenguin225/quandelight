@@ -7,8 +7,8 @@ from meep import mpb
 import h5py
 
 
-eps1 = 3
-eps2 = 3.45
+eps1 = 1
+eps2 = 12
 lamda = 15
 
 cavity_transverse_extent = 0.5
@@ -18,8 +18,8 @@ padding_y = 0
 ## MPB VARIABLES
 
 RESOLUTION = 64
-NUM_BANDS =2
-INTERP_POINTS = 151
+NUM_BANDS = 2
+INTERP_POINTS = 301
 
 
 # DEPENDENT PARAMS
@@ -63,11 +63,7 @@ geometry_lattice = mp.Lattice(size=cell)
 k_points_te = [mp.Vector3(),
             mp.Vector3(0.5, 0),]          # Gamma
 
-k_points_tm = [mp.Vector3(),
-            mp.Vector3(0.5, 0),]          # Gamma
-
 k_points_te = mp.interpolate(INTERP_POINTS, k_points_te)
-k_points_tm = mp.interpolate(INTERP_POINTS, k_points_tm)
 
 # Modesolver for x direction
 ms_te = ModeSolver(num_bands=NUM_BANDS,
@@ -78,58 +74,24 @@ ms_te = ModeSolver(num_bands=NUM_BANDS,
 
 ms_te.run_te()
 omegas_te = ms_te.all_freqs.T
-k_vals_te = np.array([v.norm() for v in k_points_te])/a_x
-
-# Modesolver for y direction
-ms_tm = ModeSolver(num_bands=NUM_BANDS,
-                k_points = k_points_tm,
-                geometry=geometry,
-                geometry_lattice=geometry_lattice,
-                resolution=RESOLUTION)
-
-ms_tm.run_tm()
-omegas_tm = ms_tm.all_freqs.T
-k_vals_tm = np.array([v.norm() for v in k_points_tm])/a_x
-
+k_vals_te = np.array([v.dot(mp.Vector3(1, 0)) for v in k_points_te])/a_x
 
 # ---------- PLOTTING ----------
 
-fig, ax = plt.subplots(1, 5, constrained_layout = True)
-ax_te, ax_te_n, ax_tm, ax_tm_n, ax_eps = ax
+fig, ax = plt.subplots(1, 2, constrained_layout = True)
+ax_te, ax_eps = ax
 
 ax_te.set_xlabel(r"$k_te$")
-ax_te_n.set_xlabel(r"$k_te$")
-ax_tm_n.set_xlabel(r"$k_tm$")
-ax_tm.set_xlabel(r"$k_tm$")
 
-ax_te_n.set_ylim(0, 3)
-ax_tm_n.set_ylim(0, 3)
-
-for axis in [ax_te, ax_tm]:
-    axis.set_ylabel(r'$\omega$')
-    axis.axhspan(ymin = omega_adim*(1 - band_width / 2), ymax = omega_adim*(1 + band_width / 2), color = 'lightgray', alpha = 0.5)
-    axis.axhline(y = omega_adim, color = 'lightgray', ls = '--')
-
-for axis in [ax_te_n, ax_tm_n]:
-    axis.set_ylabel(r"$n_eff$")
-    axis.axhline(y = np.sqrt(eps2), color = 'lightgray', label = r"$n_2$")
-    axis.axhline(y = np.sqrt(eps1), color = 'lightgray', ls = '--', label = r"$n_1$")
+ax_te.set_ylabel(r'$\omega$')
+ax_te.axhspan(ymin = omega_adim*(1 - band_width / 2), ymax = omega_adim*(1 + band_width / 2), color = 'lightgray', alpha = 0.5)
+ax_te.axhline(y = omega_adim, color = 'lightgray', ls = '--')
 
 
 # Plotting for x
 
 for band_te, omega_points_te in enumerate(omegas_te):
     omega_plot = ax_te.plot(k_vals_te, omega_points_te, label = str(band_te))
-    ax_te_n.plot(k_vals_te, omega_points_te/k_vals_te, ls = '--', color = omega_plot[0].get_color())
-
-
-# Plotting for y
-
-for band_tm, omega_points_tm in enumerate(omegas_tm):
-    omega_plot = ax_tm.plot(k_vals_tm, omega_points_tm, label = str(band_tm))
-    ax_tm_n.plot(k_vals_tm, omega_points_tm/k_vals_tm, ls = '--', color = omega_plot[0].get_color())
-
-
 
 # plotting eps
 
