@@ -5,6 +5,7 @@ from scipy.constants import e, hbar
 from meep.mpb import ModeSolver
 from meep import mpb
 import h5py
+from tqdm import tqdm
 
 
 eps1 = 3
@@ -13,22 +14,25 @@ lamda = 15
 
 FILL_CENTER = True
 
-N = 16
+N = 8
 
-cavity_transverse_extent = 1
+cavity_transverse_extent = 0.2
 
 ## MPB VARIABLES
 
 PADDING_RATIO = 1
 
 RESOLUTION = 16
-NUM_BANDS = 4*(N + 1) + 1
-INTERP_POINTS = 1
+NUM_BANDS = 2*(N +1) + 3
+INTERP_POINTS = 15
 OMEGA_POINTS = 11
 
 PLOT_GUESSES = True
 
 # COMPUTING SOME RELEVANT QUANTITIES
+min_band = NUM_BANDS - 5
+max_band = NUM_BANDS - 1
+
 
 n1 = np.sqrt(eps1)
 n2 = np.sqrt(eps2)
@@ -55,7 +59,7 @@ sim_half_width = half_cavity_width + N*grating_periodicity
 geometry = []
 
 if FILL_CENTER :
-    geometry += [mp.Block(mp.Vector3(2*half_cavity_width, cavity_transverse_extent, 0),
+    geometry += [mp.Block(mp.Vector3(2*half_cavity_width, cavity_transverse_extent),
                           center=mp.Vector3(),
                           material=mp.Medium(epsilon=eps1))]
 
@@ -94,11 +98,11 @@ b_y = 1/a_y
 geometry_lattice = mp.Lattice(size=PADDING_RATIO*cell)
 
 k_points = [mp.Vector3(),          # Gamma
-            mp.Vector3(0.5)]          # Gamma
+            mp.Vector3(0.5, 0)]          # Gamma
 
 k_points = mp.interpolate(INTERP_POINTS, k_points)
 
-omegas = np.linspace(omega_adim*(1 - band_width), omega_adim*(1 + band_width), OMEGA_POINTS)
+omegas = np.linspace(omega_adim*(1 - band_width/2), omega_adim*(1 + band_width/2), OMEGA_POINTS)
 
 
 ms = ModeSolver(num_bands=NUM_BANDS,
@@ -107,20 +111,22 @@ ms = ModeSolver(num_bands=NUM_BANDS,
                 geometry_lattice=geometry_lattice,
                 resolution=RESOLUTION)
 
-k_vals = np.zeros((len(omegas), NUM_BANDS + 1))
-for i, omega in enumerate(omegas) :
+k_vals = np.zeros((len(omegas), 4))
+for i, omega in tqdm(enumerate(omegas)):
     try :
-        w = ms.find_k(mp.NO_PARITY, omega, 0, NUM_BANDS, mp.Vector3(1, 0), 1e-4, 1e-2, 0, 0.5)
+        w = ms.find_k(mp.NO_PARITY, omega, 1, NUM_BANDS, mp.Vector3(1, 0), 1e-4, 1e-2, 0, 0.5)
         print(f"---------------------- ANS : {w}--------------------------")
         k_vals[i, :] = np.array(w)
     except :
         k_vals[i, :] = np.nan
+print(omegas)
+print(k_vals)
 
 fig, ax = plt.subplots()
 
-for band in range(NUM_BANDS + 1):
-    ax.plot(omegas, k_vals[:, band], marker = "+", label = f"{band}")
-ax.legend()
+for k_band in k_vals.T :
+    ax.plot(omegas, k_band, marker = "+")
+
 ax.set_xlabel(r"$\omega$")
 ax.set_ylabel(r"$\left|k\right|$")
 plt.show()
