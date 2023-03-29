@@ -15,7 +15,7 @@ def dbr_rectangular(N = 8, eps1=3, eps2=3.45, lamda=5, cavity_transverse_extent=
     - eps1 : float >= 1, permittivity of one layer in the pairs (and also of the cavity if fill_center is True).
     - eps2: float >= 1, permittivity of the other layer.
     - lambda : float > 0, wavelength that the DBR resonator confines.
-    - cavity_transverse_extent : float >= 0, transverse cavity_transverse_extent of the resonator. NOTE : this will also affect the allowed wavelegnths in the cavity.
+    - cavity_transverse_extent : float >= 0, transverse cavity_transverse_extent of the resonator. NOTE : this will also affect the allowed wavelengths in the cavity.
     - fill_center : bool, whether the cavity part is the same material as eps1 (True) or is air (False).
     - thickness : float >=0, z-thickness of the DBR. if 0, the DBR is 2D.
 
@@ -51,7 +51,7 @@ def dbr_rectangular(N = 8, eps1=3, eps2=3.45, lamda=5, cavity_transverse_extent=
     geometry = []
 
     if fill_center :
-        geometry += [mp.Block(mp.Vector3(2*half_cavity_width, cavity_transverse_extent, 0),
+        geometry += [mp.Block(mp.Vector3(2*half_cavity_width, cavity_transverse_extent, thickness),
                               center=mp.Vector3(),
                               material=mp.Medium(epsilon=eps1))]
 
