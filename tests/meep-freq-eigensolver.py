@@ -47,7 +47,7 @@ if is_1d :
     dim = 1
 elif is_3d :
     efield_vector = mp.Ez
-    source_pos = mp.Vector3(0.05*lamda/np.sqrt(eps1), 0.1*cavity_transverse_extent, 0.1*thickness)
+    source_pos = mp.Vector3(0*.05*lamda/np.sqrt(eps1), 0.1*cavity_transverse_extent, 0.1*thickness)
     dim = 3
 else :
     efield_vector = mp.Ez
