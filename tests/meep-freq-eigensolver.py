@@ -5,11 +5,11 @@ from scipy.constants import e, hbar
 import h5py
 import math
 from quandelight.geometries import dbr_rectangular
-from quandelight.utils import pprint
+from quandelight.utils import pprint, dtstring
 
 eps1 = 3
 eps2 = 3.5
-lamda = 5
+lamda = 1
 
 FILL_CENTER = True
 
@@ -26,7 +26,7 @@ Z_PADDING_WIDTH = 0
 
 PML_THICKNESS = 2*lamda
 
-RESOLUTION = 16
+RESOLUTION = 1
 
 SOLVER_TOL = 1e-7 # default 1e-7
 SOLVER_CWTOL = SOLVER_TOL*1e-3 # default SOLVER_TOL*1e-3
@@ -35,7 +35,12 @@ SOLVER_MAXITER = 100 # default 100
 SOLVER_CWMAXITER = 10_000 # default 10^4
 SOLVER_L = 10 # default 10
 
+folder_name = "MEEP-EIG-"
 ### PROGRAM FLOW
+
+date_and_time = dtstring()
+prefix = f"{folder_name}{date_and_time}"
+
 
 # determining whether the simulation is 1D. If that's the case, then the E-field will be along X because Meep only supports that, and the geometry will be along Z. Else, we can do whatever, but I usually orient the geometry along X and look for Ez.
 is_1d = cavity_transverse_extent == 0 and thickness == 0
@@ -75,7 +80,8 @@ sim = mp.Simulation(cell_size = cell,
                     sources = sources,
                     resolution = RESOLUTION,
                     force_complex_fields = True,
-                    dimensions = dim)
+                    dimensions = dim,
+                    filename_prefix=prefix)
 
 
 sim.use_output_directory()
@@ -95,11 +101,14 @@ Q = eigfreq.real / (-2*eigfreq.imag)
 mode_volume = sim.modal_volume_in_box()
 
 # outputting them
-pprint(f"computed freq : {eigfreq:.3e}, expected {omega_adim:.3e}, difference {100 - 100*omega_calc/omega_adim:.2f} %", color = "green")
+printy=f"computed:{eigfreq:.2e}, expected {omega_adim:.2e}, diff {100 - 100*omega_calc/omega_adim:.2f} %"
+pprint(printy, color = "green")
 pprint(f"Q = {Q:.2e}", "yellow")
 pprint(f'Mode volume : {mode_volume:.2e}', color = "red")
+mp.output_epsilon(sim)
+mp.output_efield(sim)
 
-info_string = "MEEP EIGENSOLVER.\n" + rf"$\epsilon = ({eps1:.2f}, {eps2:.2f}), \lambda = {lamda:.2f}, W={cavity_transverse_extent:.2e}, h={thickness:.2e}, N={N}$, pad=$({X_PADDING_WIDTH}, {Y_PADDING_WIDTH}, {Z_PADDING_WIDTH})$"
+info_string = "MEEP EIGENSOLVER.\n" + rf"$\epsilon = ({eps1:.2f}, {eps2:.2f}), \lambda = {lamda:.2f}, W={cavity_transverse_extent:.2e}, h={thickness:.2e}, N={N},$" +"\n" + rf" $pad=({X_PADDING_WIDTH:.2f}, {Y_PADDING_WIDTH:.2f}, {Z_PADDING_WIDTH:.2f}), res = {RESOLUTION}$" + "\n" + rf"Q = {Q:.2e}, V = {mode_volume:.2e}"+ "\n" + printy
 
 if is_1d :
     fig, ax = plt.subplots(tight_layout = True)
@@ -114,10 +123,14 @@ if is_1d :
     ax2.set_ylabel(r"$\varepsilon$")
 
     fig.suptitle(info_string)
+    fig.savefig(f"{prefix}-out/fig.png")
 else :
     sim.plot2D(fields = efield_vector, plot_eps_flag=True, eps_parameters = {
         "interpolation":"none",
     })
     plt.suptitle(info_string)
+    plt.tight_layout()
+    plt.savefig(f"{prefix}-out/fig.png")
+
 
 plt.show()

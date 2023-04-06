@@ -1,6 +1,7 @@
 import numpy as np
 import os
 import h5py
+import datetime
 
 #### WIP
 def make_pngs(hdf5_filename) :
@@ -48,3 +49,8 @@ def pprint(string, color):
     else :
         print(string)
     return None
+
+
+def dtstring():
+    when = datetime.datetime.now()
+    return when.strftime('%Y%m%d-%Hh%Mmin%Ss')

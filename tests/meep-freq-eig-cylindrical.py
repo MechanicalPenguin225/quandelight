@@ -6,15 +6,15 @@ from scipy.constants import e, hbar
 import h5py
 import math
 from quandelight.geometries import dbr_cylindrical
-from quandelight.utils import pprint
+from quandelight.utils import pprint, dtstring
 
 eps1 = 3
-eps2 = 3.5
+eps2 = 3
 lamda = 1
 
 FILL_CENTER = True
 
-N = 20
+N = 10
 
 R_max = 4*lamda/np.sqrt(eps1)
 undercut_angle = 4
@@ -26,7 +26,7 @@ Z_PADDING_WIDTH = 2
 
 PML_THICKNESS = lamda # in sim units
 
-RESOLUTION = 32
+RESOLUTION = 1
 
 SOLVER_TOL = 1e-7 # default 1e-7
 SOLVER_CWTOL = SOLVER_TOL*1e-3 # default SOLVER_TOL*1e-3
@@ -36,14 +36,15 @@ SOLVER_CWMAXITER = 10_000 # default 10^4
 SOLVER_L = 10 # default 10
 
 PRE_PLOT = False
-
+folder_name = "MEEP-CYL-EIG-"
 ### PROGRAM FLOW
 
 excitation_vector = mp.Er
-source_pos = (lamda/np.sqrt(eps1))*mp.Vector3(0.01, 0, 0.05)
+source_pos = (lamda/np.sqrt(eps1))*mp.Vector3(0.1, 0, 0.1)
 dim = 2
 
-
+date_and_time = dtstring()
+prefix = f"{folder_name}{date_and_time}"
 pprint(f"SIMULATION IS {dim}D", "purple")
 # generating the geometry and the relevant quantities
 geometry, dbr_dims, omega_adim, band_width = dbr_cylindrical(N, eps1, eps2, lamda, R_max, undercut_angle, fill_center = FILL_CENTER)
@@ -61,7 +62,8 @@ sim = mp.Simulation(cell_size = cell,
                     sources = sources,
                     resolution = RESOLUTION,
                     force_complex_fields = True,
-                    dimensions = mp.CYLINDRICAL)
+                    dimensions = mp.CYLINDRICAL,
+                    filename_prefix=prefix)
 if PRE_PLOT:
     sim.plot2D(plot_eps_flag=True, eps_parameters = {
         "interpolation":"none",
@@ -89,16 +91,18 @@ Q = eigfreq.real / (-2*eigfreq.imag)
 mode_volume = sim.modal_volume_in_box()
 
 # outputting them
-pprint(f"computed freq : {eigfreq:.3e}, expected {omega_adim:.3e}, difference {100 - 100*omega_calc/omega_adim:.2f} %", color = "green")
+printy = f"computed:{eigfreq:.2e}, expected {omega_adim:.2e}, diff{100 - 100*omega_calc/omega_adim:.2f} %"
+pprint(printy , color = "green")
 pprint(f"Q = {Q:.2e}", "yellow")
 pprint(f'Mode volume : {mode_volume:.2e}', color = "red")
 
-info_string = "MEEP EIGENSOLVER.\n" + rf"$\epsilon = ({eps1:.2f}, {eps2:.2f}), \lambda = {lamda:.2f}, R_max=={R_max:.2e}, undercut ={undercut_angle:.2f}, N={N}$, pad=$({R_PADDING_WIDTH}, {Z_PADDING_WIDTH})$"
+info_string = "MEEP EIGENSOLVER.\n" + rf"$\epsilon = ({eps1:.2f}, {eps2:.2f}), \lambda = {lamda:.2f}, Rmax={R_max:.2e}, undercut ={undercut_angle:.2f}, N={N}$," + "\n"+ rf" pad=$({R_PADDING_WIDTH:.2f}, {Z_PADDING_WIDTH:.2f}), res = {RESOLUTION}$" + "\n" + rf"Q = {Q:.2e}, V = {mode_volume:.2e}"+ "\n" + printy
 
+mp.output_epsilon(sim)
+mp.output_efield(sim)
 
-sim.plot2D(fields = excitation_vector, plot_eps_flag=True, eps_parameters = {
-    "interpolation":"none",
-})
+sim.plot2D(fields = excitation_vector, plot_eps_flag=True, eps_parameters = {"interpolation":"none",})
 plt.suptitle(info_string)
-
+plt.tight_layout()
+plt.savefig(f"{prefix}-out/fig.png")
 plt.show()
