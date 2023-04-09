@@ -9,14 +9,14 @@ from quandelight.geometries import dbr_cylindrical
 from quandelight.utils import pprint, dtstring
 
 eps1 = 3
-eps2 = 3
+eps2 = 3.5
 lamda = 1
 
 FILL_CENTER = True
 
 N = 10
 
-R_max = 4*lamda/np.sqrt(eps1)
+R_max = 5*lamda/np.sqrt(eps1)
 undercut_angle = 4
 
 ## MEEP VARIABLES
@@ -26,7 +26,7 @@ Z_PADDING_WIDTH = 2
 
 PML_THICKNESS = lamda # in sim units
 
-RESOLUTION = 1
+RESOLUTION = 32
 
 SOLVER_TOL = 1e-7 # default 1e-7
 SOLVER_CWTOL = SOLVER_TOL*1e-3 # default SOLVER_TOL*1e-3
@@ -40,7 +40,7 @@ folder_name = "MEEP-CYL-EIG-"
 ### PROGRAM FLOW
 
 excitation_vector = mp.Er
-source_pos = (lamda/np.sqrt(eps1))*mp.Vector3(0.1, 0, 0.1)
+source_pos = (lamda/np.sqrt(eps1))*mp.Vector3(0.2, 0, 0.1)
 dim = 2
 
 date_and_time = dtstring()
@@ -50,7 +50,7 @@ pprint(f"SIMULATION IS {dim}D", "purple")
 geometry, dbr_dims, omega_adim, band_width = dbr_cylindrical(N, eps1, eps2, lamda, R_max, undercut_angle, fill_center = FILL_CENTER)
 
 # setting up the simulation
-cell = dbr_dims + mp.Vector3(2*R_PADDING_WIDTH*lamda,0, 2*Z_PADDING_WIDTH*lamda)
+cell = dbr_dims + mp.Vector3(R_PADDING_WIDTH*lamda,0, 2*Z_PADDING_WIDTH*lamda)
 
 sources = [mp.Source(mp.ContinuousSource(omega_adim, fwidth = omega_adim*band_width), excitation_vector, center = source_pos)]
 
