@@ -9,11 +9,11 @@ from quandelight.utils import pprint, dtstring
 
 eps1 = 3
 eps2 = 3.5
-lamda = 5
+lamda = 0.925
 
 FILL_CENTER = True
 
-N = 100
+N = 35
 
 cavity_transverse_extent = 0*lamda/np.sqrt(eps1)
 thickness = 0
@@ -26,15 +26,17 @@ Z_PADDING_WIDTH = 5
 
 PML_THICKNESS = 2*lamda
 FLUX_ZONE_THICKNESS = 0
+F_WIDTH = 4 # frequency width of the sim, in omega_adim*band_width
 
-RESOLUTION = 25
-N_FREQ = 101
+RESOLUTION_FACTOR = 20
+N_FREQ = 1001
 
 REMOVE_LEFT_SIDE = True
 
 folder_name = "MEEP-REFL-SPEC-"
 ### PROGRAM FLOW
 
+RESOLUTION = 4*RESOLUTION_FACTOR*np.sqrt(np.max((eps1, eps2)))/lamda
 FILL_CENTER = FILL_CENTER and not(REMOVE_LEFT_SIDE)
 
 date_and_time = dtstring()
@@ -82,7 +84,7 @@ if REMOVE_LEFT_SIDE:
                               material=mp.Medium(epsilon=1)),]
 
 
-sources = [mp.Source(mp.GaussianSource(omega_adim, fwidth = 5*omega_adim),
+sources = [mp.Source(mp.GaussianSource(omega_adim, fwidth = F_WIDTH*omega_adim*band_width),
                      efield_vector,
                      center = source_pos,
                      size = source_size)]
@@ -110,12 +112,12 @@ sim = mp.Simulation(cell_size = cell,
 refl_fr = mp.FluxRegion(center = fr_center_r,
                         size = fr_size,)
 
-refl = sim.add_flux(omega_adim, omega_adim*band_width, N_FREQ, refl_fr)
+refl = sim.add_flux(omega_adim, F_WIDTH*omega_adim*band_width, N_FREQ, refl_fr)
 
 tran_fr = mp.FluxRegion(center = fr_center_t,
                         size = fr_size,)
 
-tran = sim.add_flux(omega_adim, omega_adim*band_width, N_FREQ, tran_fr)
+tran = sim.add_flux(omega_adim, F_WIDTH*omega_adim*band_width, N_FREQ, tran_fr)
 
 check_pt = fr_center_r
 
@@ -137,8 +139,8 @@ sim = mp.Simulation(cell_size = cell,
                     dimensions = dim,
                     filename_prefix=prefix)
 
-refl = sim.add_flux(omega_adim, omega_adim*band_width, N_FREQ, refl_fr)
-tran = sim.add_flux(omega_adim, omega_adim*band_width, N_FREQ, tran_fr)
+refl = sim.add_flux(omega_adim, F_WIDTH*omega_adim*band_width, N_FREQ, refl_fr)
+tran = sim.add_flux(omega_adim, F_WIDTH*omega_adim*band_width, N_FREQ, tran_fr)
 
 if not(is_1d):
     sim.plot2D()
@@ -163,12 +165,13 @@ if mp.am_master():
     plt.figure()
     plt.axvline(x = omega_adim, color = 'k', ls = '--')
     plt.axhline(y = 1, color = "lightgray")
+    plt.axvspan(omega_adim*(1 - band_width/2), omega_adim*(1+band_width/2), color = 'lightgray', alpha=0.5)
     plt.grid(True)
     plt.axhline(color = 'k')
-    plt.plot(wl, Rs, "bo-", alpha= 0.5, label="reflectance")
-    plt.plot(wl, Rs_from_Ts, "yo-", alpha= 0.5, label="reflectance from transmittance")
-    plt.plot(wl, Ts, "ro-", label="transmittance")
+    plt.plot(wl, Rs, "b+-", alpha= 0.5, label="reflectance")
+    plt.plot(wl, Ts, "r+-", alpha = 0.5, label="transmittance")
     #plt.plot(wl, 1 - Rs - Ts, "go-", label="loss")
     plt.xlabel(r"$\omega$")
     plt.legend(loc="upper right")
+    plt.ylim(-0.5, 1.5)
     plt.show()
