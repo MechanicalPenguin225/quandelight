@@ -13,10 +13,12 @@ lamda = 0.925
 
 FILL_CENTER = True
 
-N = 35
+N = 32
 
 cavity_transverse_extent = 0*lamda/np.sqrt(eps1)
 thickness = 0
+
+cavity_length = 1
 
 ## MEEP VARIABLES
 
@@ -28,10 +30,10 @@ PML_THICKNESS = 2*lamda
 FLUX_ZONE_THICKNESS = 0
 F_WIDTH = 4 # frequency width of the sim, in omega_adim*band_width
 
-RESOLUTION_FACTOR = 20
+RESOLUTION_FACTOR = 10
 N_FREQ = 1001
 
-REMOVE_LEFT_SIDE = True
+REMOVE_LEFT_SIDE = False
 
 folder_name = "MEEP-REFL-SPEC-"
 ### PROGRAM FLOW
@@ -68,7 +70,7 @@ else :
 
 pprint(f"SIMULATION IS {dim}D", "purple")
 # generating the geometry and the relevant quantities
-geometry, dbr_dims, omega_adim, band_width = dbr_rectangular(N, eps1, eps2, lamda, cavity_transverse_extent, fill_center = FILL_CENTER, thickness = thickness, meep_1d = is_1d)
+geometry, dbr_dims, omega_adim, band_width = dbr_rectangular(N, eps1, eps2, lamda, cavity_transverse_extent, fill_center = FILL_CENTER, thickness = thickness, meep_1d = is_1d, center_cav_scale=cavity_length)
 
 # setting up the simulation
 cell = dbr_dims + mp.Vector3(2*X_PADDING_WIDTH*lamda,2*Y_PADDING_WIDTH*lamda, 2*Z_PADDING_WIDTH*lamda)
@@ -90,7 +92,7 @@ sources = [mp.Source(mp.GaussianSource(omega_adim, fwidth = F_WIDTH*omega_adim*b
                      size = source_size)]
 
 if is_1d:
-    pml_layers = [mp.Absorber(PML_THICKNESS)]
+    pml_layers = [mp.PML(PML_THICKNESS)]
     fr_center_t = dbr_dims/2
     fr_center_r = mp.Vector3()-dbr_dims/2
     fr_size = mp.Vector3()
@@ -148,7 +150,7 @@ if not(is_1d):
 
 sim.load_minus_flux_data(refl, empty_refl_data)
 
-sim.run(until_after_sources = mp.stop_when_fields_decayed(50, efield_vector, check_pt, 1e-5))
+sim.run(until_after_sources = mp.stop_when_fields_decayed(150, efield_vector, check_pt, 1e-5))
 
 res_refl_flux = np.array(mp.get_fluxes(refl))
 res_tran_flux = np.array(mp.get_fluxes(tran))

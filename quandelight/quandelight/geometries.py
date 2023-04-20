@@ -8,7 +8,7 @@ from meep import mpb
 
 # DEFINING FUNCTIONS
 
-def dbr_rectangular(N = 8, eps1=3, eps2=3.45, lamda=5, cavity_transverse_extent=1, fill_center = True, thickness = 0, meep_1d=False):
+def dbr_rectangular(N = 8, eps1=3, eps2=3.45, lamda=5, cavity_transverse_extent=1, fill_center = True, thickness = 0, meep_1d=False, center_cav_scale=1):
     """generates a rectangular DBR cavity geometry (confined direction along x if 2d or 3d, along z if 1d). DBR cavity is centered at origin.
     Inputs :
     - N : int or 2-tuple of ints, number of layers on each side of the cavity. if N is a tuple of 2 intz (e.g. (5, 8)), it is the number of layers on the left (neg. x) and right (pos. x) respectively
@@ -19,6 +19,7 @@ def dbr_rectangular(N = 8, eps1=3, eps2=3.45, lamda=5, cavity_transverse_extent=
     - fill_center : bool, whether the cavity part is the same material as eps1 (True) or is air (False).
     - thickness : float >=0, z-thickness of the DBR. if 0, the DBR is 2D.
     - meep_1d : bool, whether to rotate the structure to fit 1D Meep's requirements.
+    - center_cav_scale : float >0 : length of the center cavity in appropriate lambda of the correspondig medium.
 
     Outputs :
     - geometry : list of MEEP geometries.
@@ -46,9 +47,12 @@ def dbr_rectangular(N = 8, eps1=3, eps2=3.45, lamda=5, cavity_transverse_extent=
     lay_th_1 = lamda_1/4
     lay_th_2 = lamda_2/4
 
-    lamda_0 = lamda_1 if fill_center else lamda
+    if fill_center:
+        lamda_0 = lamda_1
+    else :
+        lamda_0 = lamda
 
-    half_cavity_width = lamda_0/2
+    half_cavity_width = center_cav_scale*lamda_0/2
 
     grating_periodicity = lay_th_1 + lay_th_2
 
@@ -124,7 +128,7 @@ def dbr_rectangular(N = 8, eps1=3, eps2=3.45, lamda=5, cavity_transverse_extent=
 
 
 
-def dbr_cylindrical(N = 8, eps1=3, eps2=3.45, lamda=5, R_max = 2, undercut_angle=4, fill_center = True):
+def dbr_cylindrical(N = 8, eps1=3, eps2=3.45, lamda=5, R_max = 2, undercut_angle=4, fill_center = True, center_cav_scale=1):
     """generates a cylindrical (possibly tapered) DBR cavity geometry. DBR cavity is centered at origin. This is meant to be used in a cylindrical sim.
     IMPORTANT NOTE : if you use two different DBR layer numbers, make sure they are in ascending order.
     Inputs :
@@ -135,6 +139,7 @@ def dbr_cylindrical(N = 8, eps1=3, eps2=3.45, lamda=5, R_max = 2, undercut_angle
     - R_max : float >= 0, max radius of the resonator. NOTE : this will also affect the allowed wavelengths in the cavity.
     - undercut_angle : float, angle (in degrees) of the undercut making the pillar conical. NOTE : this will also affect the allowed wavelengths in the cavity.
     - fill_center : bool, whether the cavity part is the same material as eps1 (True) or is air (False).
+    - center_cav_scale : float > 0, cf. function above.
 
     Outputs :
     - geometry : list of MEEP geometries.
@@ -145,7 +150,7 @@ def dbr_cylindrical(N = 8, eps1=3, eps2=3.45, lamda=5, R_max = 2, undercut_angle
     undercut_angle_radians = undercut_angle/180*np.pi
     undercut_direction = mp.Vector3(0, 0, 1).rotate(mp.Vector3(0, 1, 0), -undercut_angle_radians) # will be the skew axis of our setup
     # generate a 2D rectangular resonator along the Z axis
-    geometry, dims, omega, band_width = dbr_rectangular(N, eps1, eps2, lamda, cavity_transverse_extent=2*R_max, fill_center = fill_center, thickness = 0, meep_1d=True)
+    geometry, dims, omega, band_width = dbr_rectangular(N, eps1, eps2, lamda, cavity_transverse_extent=2*R_max, fill_center = fill_center, thickness = 0, meep_1d=True, center_cav_scale=center_cav_scale)
 
     L = dims.z
     delta_R = np.tan(undercut_angle_radians)*L # radius at the other end of the *bounding box given by dims*.

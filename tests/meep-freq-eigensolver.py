@@ -26,7 +26,7 @@ Z_PADDING_WIDTH = 0
 
 PML_THICKNESS = 2*lamda
 
-RESOLUTION = 1
+RESOLUTION_FACTOR = 10
 
 SOLVER_TOL = 1e-7 # default 1e-7
 SOLVER_CWTOL = SOLVER_TOL*1e-3 # default SOLVER_TOL*1e-3
@@ -38,6 +38,7 @@ SOLVER_L = 10 # default 10
 folder_name = "MEEP-EIG-"
 ### PROGRAM FLOW
 
+RESOLUTION = 4*RESOLUTION_FACTOR*np.sqrt(np.max((eps1, eps2)))/lamda
 date_and_time = dtstring()
 prefix = f"{folder_name}{date_and_time}"
 
