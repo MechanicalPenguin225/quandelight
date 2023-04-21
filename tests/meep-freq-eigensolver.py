@@ -9,13 +9,13 @@ from quandelight.utils import pprint, dtstring
 
 eps1 = 3
 eps2 = 3.5
-lamda = 1
+lamda = 0.925
 
 FILL_CENTER = True
 
 N = 10
 
-cavity_transverse_extent = lamda/np.sqrt(eps1)/2
+cavity_transverse_extent = 5*lamda/np.sqrt(eps1)
 thickness = 0
 
 ## MEEP VARIABLES

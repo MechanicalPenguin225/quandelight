@@ -10,14 +10,14 @@ from quandelight.utils import pprint, dtstring
 
 eps1 = 3
 eps2 = 3.5
-lamda = 1
+lamda = 0.925
 
 FILL_CENTER = True
 
 N = 10
 
-R_max = lamda/np.sqrt(eps1)
-undercut_angle = 0
+R_max = 2*lamda/np.sqrt(eps1)
+undercut_angle = 4
 
 ## MEEP VARIABLES
 

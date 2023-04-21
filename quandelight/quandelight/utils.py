@@ -3,13 +3,6 @@ import os
 import h5py
 import datetime
 
-#### WIP
-def make_pngs(hdf5_filename) :
-    current_filename = os.path.basename(__file__)
-
-    file = h5py.File(f'{current_filename[:-3]}-out/{hdf5_filename}.h5', 'r')
-
-#### NOT WIP.
 def pprint(string, color):
     """prints string in color using ANSI terminal standards.
     Parameters :
