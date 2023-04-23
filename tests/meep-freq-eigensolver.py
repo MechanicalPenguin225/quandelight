@@ -13,9 +13,9 @@ lamda = 0.925
 
 FILL_CENTER = True
 
-N = 10
+N = 32
 
-cavity_transverse_extent = 2*lamda/np.sqrt(np.sqrt(eps1)*np.sqrt(eps2))
+cavity_transverse_extent = 5*lamda/np.sqrt(np.sqrt(eps1)*np.sqrt(eps2))
 thickness = 0
 
 ## MEEP VARIABLES
@@ -24,7 +24,7 @@ X_PADDING_WIDTH = 3 + np.sqrt(2) # in lambdas, includes PML
 Y_PADDING_WIDTH = 3 + np.sqrt(2)
 Z_PADDING_WIDTH = 0
 
-PML_THICKNESS = 2*lamda
+PML_THICKNESS = 2
 
 RESOLUTION_FACTOR = 4
 

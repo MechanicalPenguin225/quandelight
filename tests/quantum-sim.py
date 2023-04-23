@@ -7,21 +7,23 @@ from scipy.constants import c, hbar
 
 # Computing the figures of merit from the quantum sim
 
-D = 50*3.33e-30
+d = 50*3.33e-30
 omega_adim = 1.08
 eps = 3
 V = 1.59
-Q = 81.2
+Q = 10*81.2
 tau = 1.1e-9
 
 a = 1e-6 # length unit used in Meep
-lamda = 0.925
+lamda = 1/omega_adim
+print(lamda)
 
 ### PHYSICAL PARAMETERS
 
-g = coupling_constant(D, omega_adim, eps, V) # coupling between atom and cavity. Expect hbar*g ~ 5 to 20 µeV
+g = coupling_constant(d, omega_adim, eps, V) # coupling between atom and cavity. Expect hbar*g ~ 5 to 20 µeV
 gamma = gamma(tau)*c/a # Emitter decay rate. Given at 1/gamma ~ 1.1 ns
 kappa = cavity_decay(omega_adim, Q)*c/a # cavity decay rate. Expected hbar*kappa ~ 200 to 500 µeV. kappa = omega/2Q
+
 
 delta_o = 0 # detuning for the atom. 0 for now
 delta_c = 0 # detuning for the cavity. 0 for now
@@ -32,7 +34,9 @@ gamma_star = 0
 TIME_POINTS = 1001
 CORR_TIME_POINTS = 301
 CORR_TAU_POINTS = 301
-end_time = 5*(np.max((1/kappa, 1/gamma)))
+end_time = 5/(np.sqrt(kappa*gamma))
+
+pprint(f"{end_time:.2e}, {end_time*a/c:.2e}, {c/a:.2e}", "red")
 
 ### FUNCTIONS
 
@@ -63,6 +67,7 @@ omega_args = {"width" : pulse_width, # args for the pulse shaping
 times = np.linspace(0, end_time, TIME_POINTS) # times for the time-resolved evolution of the cavity.
 corr_t = np.linspace(0, end_time, CORR_TIME_POINTS)
 corr_tau = np.linspace(0, end_time, CORR_TAU_POINTS)
+
 
 dt = times[1] - times[0]
 dt_corr = corr_t[1] - corr_t[0]
