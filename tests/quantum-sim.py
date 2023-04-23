@@ -2,14 +2,26 @@ from qutip import *
 import numpy as np
 import matplotlib.pyplot as plt
 from quandelight.utils import pprint
+from quandelight.conversions import *
+from scipy.constants import c, hbar
 
 # Computing the figures of merit from the quantum sim
 
+D = 50*3.33e-30
+omega_adim = 1.08
+eps = 3
+V = 1.59
+Q = 81.2
+tau = 1.1e-9
+
+a = 1e-6 # length unit used in Meep
+lamda = 0.925
+
 ### PHYSICAL PARAMETERS
 
-g = 1e-2 # coupling between atom and cavity. Expect hbar*g ~ 5 to 20 µeV
-gamma = 1e-1 # Emitter decay rate. Given at 1/gamma ~ 1.1 ns
-kappa = 1e-1 # cavity decay rate. Expected hbar*kappa ~ 200 to 500 µeV. kappa = omega/2Q
+g = coupling_constant(D, omega_adim, eps, V) # coupling between atom and cavity. Expect hbar*g ~ 5 to 20 µeV
+gamma = gamma(tau)*c/a # Emitter decay rate. Given at 1/gamma ~ 1.1 ns
+kappa = cavity_decay(omega_adim, Q)*c/a # cavity decay rate. Expected hbar*kappa ~ 200 to 500 µeV. kappa = omega/2Q
 
 delta_o = 0 # detuning for the atom. 0 for now
 delta_c = 0 # detuning for the cavity. 0 for now
@@ -18,32 +30,34 @@ gamma_star = 0
 ### SIMULATION PARAMETERS
 
 TIME_POINTS = 1001
-CORR_TIME_POINTS = 1001
-CORR_TAU_POINTS = 1001
-end_time = 2/(kappa*gamma)
+CORR_TIME_POINTS = 301
+CORR_TAU_POINTS = 301
+end_time = 5*(np.max((1/kappa, 1/gamma)))
 
 ### FUNCTIONS
 
 def Omega(t, args):
     """Time-evolution of the Rabi pulse.
-    Arguments :
+    ---------- INPUTS ----------
     t : float. Time
-    args : dict {"width", "delay", "amp"} : shape factors of the pulse."""
+    args : dict {"width", "delay", "amp"} : shape factors of the pulse. "amp" is optional and defaults to pi."""
     sigma = args["width"]
     mu = args["delay"]
-    A = args["amp"]
+    if "amps" in args.keys() :
+        A = args["amp"]
+    else :
+        A = pi
     return A/(sigma*np.sqrt(2*np.pi)) * np.exp(-((t-mu)/sigma)**2/2)
 
 ### PROGRAM FLOW
 
 # some physical parameters from data
 
-purcell = 4*g/(gamma*kappa)
+purcell = purcell_from_cavity_features(lamda, eps, Q, V)
 pulse_width = 1/(10*purcell*gamma) # as proposed by Stephen
 
 omega_args = {"width" : pulse_width, # args for the pulse shaping
-              "delay": 5*pulse_width,
-              "amp": 3,}
+              "delay": 0,}
 
 # defining simulation params
 times = np.linspace(0, end_time, TIME_POINTS) # times for the time-resolved evolution of the cavity.
@@ -115,9 +129,8 @@ ax_r.set_xlabel(r"$\tau$")
 ax_r.set_ylabel(r"$t$")
 
 g2_int_real = np.real(g2_integrand)
-vmax = np.max(np.abs(g2_int_real))
 
-im = ax_r.imshow(g2_int_real, origin = "lower", aspect = "auto", extent = (corr_tau[0], corr_tau[-1], corr_t[0], corr_t[-1]), cmap = "twilight_shifted", vmin = -vmax, vmax = vmax)
+im = ax_r.imshow(g2_int_real, origin = "lower", aspect = "auto", extent = (corr_tau[0], corr_tau[-1], corr_t[0], corr_t[-1]), cmap = "cividis", vmin = 0)
 fig.colorbar(im, label = "integrand for $g^{(2)}$")
 
 ax_l.set_title(f"mu = {mu:.2e}, Fp/(1 + Fp) = {purcell/(1 + purcell):.2e}")

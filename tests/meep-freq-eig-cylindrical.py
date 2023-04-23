@@ -16,17 +16,17 @@ FILL_CENTER = True
 
 N = 10
 
-R_max = 2*lamda/np.sqrt(eps1)
-undercut_angle = 4
+R_max = 2.5*lamda/np.sqrt(eps1)
+undercut_angle = 0
 
 ## MEEP VARIABLES
 
 R_PADDING_WIDTH = 2 # in lambdas, includes PML
-Z_PADDING_WIDTH = 2
+Z_PADDING_WIDTH = 5
 
 PML_THICKNESS = lamda # in sim units
 
-RESOLUTION_FACTOR = 10
+RESOLUTION_FACTOR = 4
 
 SOLVER_TOL = 1e-7 # default 1e-7
 SOLVER_CWTOL = SOLVER_TOL*1e-3 # default SOLVER_TOL*1e-3
@@ -42,7 +42,7 @@ folder_name = "MEEP-CYL-EIG-"
 RESOLUTION = 4*RESOLUTION_FACTOR*np.sqrt(np.max((eps1, eps2)))/lamda
 
 excitation_vector = mp.Ep
-source_pos = (lamda/np.sqrt(eps1))*mp.Vector3(0.5, 0, 0.1)
+source_pos = (lamda/np.sqrt(eps1))*mp.Vector3(0.2, 0, 0.1)
 dim = 2
 
 date_and_time = dtstring()
