@@ -8,32 +8,32 @@ import h5py
 import math
 from quandelight.geometries import dbr_rectangular
 
-eps1 = 1
-eps2 = 12
-lamda = 5
+eps1 = 3
+eps2 = 3.5
+lamda = 0.925
 
 FILL_CENTER = False
 
 N = 128
 
-cavity_transverse_extent = 0*lamda
+cavity_transverse_extent = 0.1*lamda
 
 ## MPB VARIABLES
 
 X_PADDING_WIDTH = 3 +  np.sqrt(2)-1 # in lambdas
 Y_PADDING_WIDTH = 0
 
-RESOLUTION = 8
+RESOLUTION_FACTOR = 4
 FOLDING_FACTOR = 2*(N + 2*math.floor(X_PADDING_WIDTH) + 1)
 NUM_BANDS = FOLDING_FACTOR + 3
-INTERP_POINTS = 1
+INTERP_POINTS = 2
 
 PLOT_GUESSES = True
 
 geometry, dbr_dims, omega_adim, band_width = dbr_rectangular(N, eps1, eps2, lamda, cavity_transverse_extent, fill_center = FILL_CENTER, thickness = 0)
 ### PROGRAM FLOW
 
-
+RESOLUTION = 4*RESOLUTION_FACTOR*np.sqrt(np.max((eps1, eps2)))/lamda
 
 cell = dbr_dims + mp.Vector3(2*X_PADDING_WIDTH*lamda,2*Y_PADDING_WIDTH*lamda)
 a_x = cell.x

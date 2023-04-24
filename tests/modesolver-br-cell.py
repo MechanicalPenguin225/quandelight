@@ -7,23 +7,23 @@ from meep import mpb
 import h5py
 
 
-eps1 = 1
-eps2 = 12
-lamda = 15
+eps1 = 3
+eps2 = 3.5
+lamda = 0.925
 
-cavity_transverse_extent = 0.5
+cavity_transverse_extent = 0.01
 
 padding_x = 0
 padding_y = 0
 ## MPB VARIABLES
 
-RESOLUTION = 64
-NUM_BANDS = 2
-INTERP_POINTS = 301
+RESOLUTION_FACTOR = 120
+NUM_BANDS = 4
+INTERP_POINTS = 101
 
 
 # DEPENDENT PARAMS
-
+RESOLUTION = 4*RESOLUTION_FACTOR*np.sqrt(np.max((eps1, eps2)))/lamda
 
 n1 = np.sqrt(eps1)
 n2 = np.sqrt(eps2)

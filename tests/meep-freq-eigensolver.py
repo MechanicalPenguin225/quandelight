@@ -20,11 +20,11 @@ thickness = 0
 
 ## MEEP VARIABLES
 
-X_PADDING_WIDTH = 3 + np.sqrt(2) # in lambdas, includes PML
-Y_PADDING_WIDTH = 3 + np.sqrt(2)
+X_PADDING_WIDTH = 4 + np.sqrt(2) # in lambdas, includes PML
+Y_PADDING_WIDTH = 4 + np.sqrt(2)
 Z_PADDING_WIDTH = 0
 
-PML_THICKNESS = 2
+PML_THICKNESS = 2*lamda
 
 RESOLUTION_FACTOR = 4
 
